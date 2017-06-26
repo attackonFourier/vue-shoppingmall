@@ -5,7 +5,14 @@ import VueRouter from 'vue-router'
 import routes from './router/router'
 import { routerMode } from './utils/env'
 
+import swiper from 'vue-awesome-swiper'
+import Tab from 'vue-tabs-component'
+import modal from './components/modal'
+
 Vue.use(VueRouter)
+Vue.use(swiper)
+Vue.use(Tab)
+Vue.use(modal)
 
 const router = new VueRouter({
   routes,

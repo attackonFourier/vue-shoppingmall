@@ -26,13 +26,13 @@
     props: ['headTitle', 'goBack'],
     computed: {
       /*...mapState([
-        'userInfo'
-      ]),*/
+       'userInfo'
+       ]),*/
     },
     methods: {
       /*...mapActions([
-        'getUserInfo'
-      ]),*/
+       'getUserInfo'
+       ]),*/
     },
   }
 </script>

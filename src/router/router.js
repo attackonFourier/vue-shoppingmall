@@ -3,6 +3,7 @@
  */
 import App from '../App.vue'
 
+const product = r  => require.ensure([], () => r(require('../views/product/product.vue')), 'product')
 const login = r  => require.ensure([], () => r(require('../views/login/login.vue')), 'login')
 const order = r  => require.ensure([], () => r(require('../views/order/order.vue')), 'order')
 const address = r  => require.ensure([], () => r(require('../views/address/address.vue')), 'address')
@@ -13,7 +14,12 @@ export default [{
   children:[
     {
       path:'',
-      redirect:'./login'
+      redirect:'./product'
+    },
+    //商品详细页
+    {
+      path:'/product',
+      component:product
     },
     //登录页
     {
