@@ -7,7 +7,7 @@
         </section>
         <section class="input">
           <input type="text" name="phone" placeholder="验证码" v-model="codeNumber"/>
-          <button @click.prevent="getVerifyCode" :class="{right_phone_number:rightPhoneNumber}">获取验证码</button>
+          <!--<button @click.prevent="getVerifyCode" :class="{right_phone_number:rightPhoneNumber}">获取验证码</button>-->
         </section>
     </form>
 
@@ -16,18 +16,28 @@
 </template>
 <script>
   import {mapState,mapMutations} from 'vuex'
+  import { apiUrl } from '../../utils/url'
+  import alertTip from '../../components/common/alertTip.vue'
 
   export default{
     data(){
       return{
-        phoneNumber:null
+        userInfo: null,
+        phoneNumber:null,
+        codeNumber:null
       }
     },
+    components: {
+      alertTip,
+    },
     methods:{
+      ...mapMutations([
+        'RECORD_USERINFO'
+      ]),
       login(){
         let data = new FormData();
         data.append('mobile',this.phoneNumber);
-        data.append('smsCode',999999);
+        data.append('smsCode',this.codeNumber);
         data.append('deviceCode','buoumall-h5-h5');
         fetch(apiUrl + '/v2/login/bySms', {
           body:data,
@@ -35,6 +45,8 @@
         }).then((response)=>{
           response.json().then((res)=>{
             if(200 === res.code){
+              this.userInfo = res.data;
+              this.RECORD_USERINFO(res.data);
               this.$router.push('/order')
             }
           });

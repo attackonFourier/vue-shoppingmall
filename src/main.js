@@ -3,11 +3,14 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import routes from './router/router'
+import store from './store/'
 import { routerMode } from './utils/env'
 
 import swiper from 'vue-awesome-swiper'
 import Tab from 'vue-tabs-component'
 import modal from './components/modal'
+
+import './style/icofont/iconfont.css'
 
 Vue.use(VueRouter)
 Vue.use(swiper)
@@ -38,7 +41,7 @@ const router = new VueRouter({
 new Vue({
   //el: '#app',
   router,
-  //store,
+  store,
   //template: '<login/>',
   //components: { login }
 }).$mount('#app')

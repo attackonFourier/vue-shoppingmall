@@ -7,6 +7,7 @@ const product = r  => require.ensure([], () => r(require('../views/product/produ
 const login = r  => require.ensure([], () => r(require('../views/login/login.vue')), 'login')
 const order = r  => require.ensure([], () => r(require('../views/order/order.vue')), 'order')
 const address = r  => require.ensure([], () => r(require('../views/address/address.vue')), 'address')
+const doAddress = r  => require.ensure([], () => r(require('../views/address/children/doAddress.vue')), 'doAddress')
 
 export default [{
   path:'/',
@@ -34,7 +35,11 @@ export default [{
     //地址列表页
     {
       path:'/address',
-      component:address
+      component:address,
+      children:[{
+        path:'doAddress',
+        component:doAddress
+      }]
     }
   ]
 }]
