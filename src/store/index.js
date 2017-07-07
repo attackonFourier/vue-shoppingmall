@@ -10,12 +10,18 @@ import getters from './getter'
 Vue.use(Vuex)
 
 const state ={
+  productInfo:{},
   userInfo:null,
   //地址相关
   addressIndex:null,
+  addressID:null,
   addAddress:'',
   newAddress:[],
-  deleteAddress:[]
+  deleteAddress:[],
+  //发票
+  invoiceInfo:{},
+
+  orderID:null
 }
 
 export default new Vuex.Store({

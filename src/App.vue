@@ -1,5 +1,5 @@
 <template>
-  <div class="wrap">
+  <div>
     <transition name="router-fade" mode="out-in">
       <keep-alive>
         <router-view v-if="$route.meta.keepAlive"></router-view>
@@ -17,17 +17,16 @@
   }
 </script>
 
-<style>
-  html,body{
-    height:100%;
-  }
-  .wrap{
-    height:100%;
-  }
+<style lang="scss">
+  @import './style/reset.scss';
+
   #app {
-    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    font-family: 'Microsoft YaHei','Avenir', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    height:100%;
+  }
+  body,html{
+    width:100%;
+    height: 100%;
   }
 </style>

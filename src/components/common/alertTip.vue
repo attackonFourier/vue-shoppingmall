@@ -1,10 +1,10 @@
 <template>
   <div class="alet_container">
     <section class="tip_text_container">
-      <div class="tip_icon">
+      <!--<div class="tip_icon">
         <span></span>
         <span></span>
-      </div>
+      </div>-->
       <p class="tip_text">{{alertText}}</p>
       <div class="confrim" @click="closeTip">确认</div>
     </section>
@@ -50,16 +50,21 @@
     position: absolute;
     top: 50%;
     left: 50%;
+    margin-top: -150px;
+    margin-left: -150px;
+    width: 300px;
     animation: tipMove .4s ;
     background-color: rgba(255,255,255,1);
-    border: 1px;
+    border: 1px;/*no*/
+    padding-top: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    border: 1px;
+    border: 1px;/*no*/
+    border-radius: 5px;/*no*/
   .tip_icon{
-    border: 1px solid #f8cb86;
+    border: 10px solid #f8cb86;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -69,21 +74,31 @@
     background-color: #f8cb86;
   }
   span:nth-of-type(2){
-    border: 1px;
+    border: 1px;/*no*/
     border-radius: 50%;
+    margin-top: 20px;
     background-color: #f8cb86;
   }
   }
   .tip_text{
+    line-height: 60px;
     text-align: center;
+    margin-top: 30px;
+    padding: 0 20px;
   }
   .confrim{
     font-weight: bold;
-    background-color: #4cd964;
+    margin-top: 20px;
+    background-color: #ec9182;
     width: 100%;
     text-align: center;
+    line-height: 60px;
+    color:#fff;
     border: 1px;
+    border-bottom-left-radius: 5px;/*no*/
+    border-bottom-right-radius: 5px;/*no*/
   }
   }
+
 
 </style>

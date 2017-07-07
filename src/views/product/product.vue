@@ -1,59 +1,85 @@
 <template>
-  <div>
+  <div class="product" ref="productTouch">
     <swiper :options="swiperOption" ref="mySwiper">
       <swiper-slide v-for="slide in slierImages" key={{index}}>
         <img :src="slide"/>
       </swiper-slide>
       <!-- Optional controls -->
       <div class="swiper-pagination"  slot="pagination"></div>
-      <div class="swiper-scrollbar"   slot="scrollbar"></div>
     </swiper>
     <div class="title">
       <div class="name">{{mainName}}</div>
       <div class="price">&yen;{{mainPrice}}</div>
     </div>
     <img class="tips" src="../../images/pro_tips.png"/>
-    <tabs>
-      <tab name="详情">
+    <section class="change_show_type">
+      <div class="item">
+        <span :class='{active: changeShowType =="detail"}' @click="changeShowType='detail'">详情</span>
+      </div>
+      <div class="item">
+        <span :class='{active: changeShowType =="designer"}' @click="changeShowType='designer'">设计师</span>
+      </div>
+      <div class="item">
+        <span :class='{active: changeShowType =="comment"}' @click="changeShowType='comment'">评论</span>
+      </div>
+      <div class="item">
+        <span :class='{active: changeShowType =="params"}' @click="changeShowType='params'">参数</span>
+      </div>
+    </section>
+
+    <transition name="fade-choose">
+      <section v-show="changeShowType === 'detail'">
         <div class="content" v-html="content"></div>
-      </tab>
-      <tab name="设计师">
+      </section>
+    </transition>
+
+    <transition name="fade-choose">
+      <section v-show="changeShowType === 'designer'">
         <div class="designer">
           <div class="avatar">
             <img :src="designer.avatar">
             <p class="name">{{designer.nickname}}</p>
             <p class="signature">{{designer.signature}}</p>
-          <!--  <div v-show="!isFollow" class="follow notFollow" v-on:click="follow">+关注</div>
-            <div v-show="isFollow" class="follow isFollow" v-on:click="follow">已关注</div>-->
           </div>
           <div class="introduction" v-html="designer.introduction"></div>
         </div>
-      </tab>
-      <tab name="评价">
+      </section>
+    </transition>
+
+    <transition name="fade-choose">
+      <section v-show="changeShowType === 'comment'">
         <div class="commentList">
           <div key={index} class="comment" v-for="item in commentList">
             <img :src="item.avatar">
-            <div className="com-item">
-              <div className="name">{{item.name}}</div>
-              <div className="content">{{item.content}}</div>
+            <div class="com-item">
+              <div class="name">{{item.name}}</div>
+              <div class="content">{{item.content}}</div>
             </div>
           </div>
         </div>
-      </tab>
-      <tab name="参数">
-        <div>
+      </section>
+    </transition>
+
+    <transition name="fade-choose">
+      <section v-show="changeShowType === 'params'">
+        <div class="par-list">
           <div v-for="item in paramsList" key={index} class="p-item">
             <div class="left">{{item.name}}</div>
             <div class="right">{{item.value}}</div>
           </div>
         </div>
-        <img :src="paramImg"/>
-      </tab>
-    </tabs>
+        <img :src="paramImg" class="paramImg"/>
+      </section>
+    </transition>
+
     <nav class="bar">
       <a class="buyNow" @click="goBuy">立即购买</a>
     </nav>
-    <modal name="specModal" :width="'100%'" :height="'auto'">
+    <modal name="specModal"
+           :width="'100%'"
+           :height="'auto'"
+           @before-open="beforeOpen"
+           @before-close="beforeClose">
         <div class="pop">
           <div class="cancel" @click="cancel">
             <img src="../../images/cancel.png"/>
@@ -97,18 +123,25 @@
           <div @click="sure" class="bottom">确定</div>
         </div>
     </modal>
+    <transition name="router-slid" mode="out-in">
+      <router-view></router-view>
+    </transition>
   </div>
 </template>
 <script>
   import {apiUrl,imageUrl} from '../../utils/url'
-  import {getComment} from '../../service/fetchData'
+  import {getStore} from '../../utils/util'
+  import {mapMutations} from 'vuex'
 
   export default {
     data () {
       return {
+        productID:null,
+        shareCode:null,
         slierImages:[],
         mainName:'',
         mainPrice:'',
+        changeShowType:'detail',
         content:'',
         designer:{
           avatar:'',
@@ -137,6 +170,7 @@
           }
         },
         buyNum:1,
+        deliveryFee:'',
         swiperOption: {
           notNextTick: true,
           direction: 'horizontal',
@@ -145,34 +179,36 @@
         }
       }
     },
+    created(){
+      this.productID = this.$route.query.productId;
+      this.shareCode = this.$route.query.shareCode;
+      this.initData();
+    },
     computed: {
       swiper () {
         return this.$refs.mySwiper.swiper
       },
     },
-    mounted () {
-      this.initData();
-      //this.swiper.slideTo(3, 1000, false)
-    },
     methods:{
+      ...mapMutations([
+        'ADD_PRODUCT'
+      ]),
       async initData(){
         await this.productDetail();
         await this.getComment();
         await this.getProps();
-        await this.getStock();
       },
       productDetail(){
-        fetch(apiUrl + '/v2/product/get/4324',{
+        fetch(apiUrl + '/v2/product/get/'+ this.productID,{
           method: 'post',
-          body: {
-            memberToken:''
-          },
         }).then((response)=>{
           if(200 === response.status){
             response.json().then((res)=> {
               let data = res.data;
               this.mainName = data.product.name;
+              document.querySelector('title').innerHTML = this.mainName ;
               this.mainPrice = data.product.leastPrice;
+              this.deliveryFee = data.deliveryFee;
               this.slierImages = data.mainPics.map((item)=>{
                 return imageUrl + item;
               });
@@ -207,14 +243,17 @@
                   this.specs.spec2.name = sp.name;
                 }
               });
-              this.pop.popImage = this.specs.spec1.list[0].imgUrl;
+              //this.pop.popImage = this.specs.spec1.list[0].imgUrl;
+              this.pop.popImage = imageUrl + '/' + data.product.listPic;
+
+              this.getStock();
             });
           }
         });
       },
       getComment(){
         let data = new FormData();
-        data.append('productId', 4324);
+        data.append('productId', this.productID);
         data.append('pageNo', 1);
         data.append('pageSize', 2);
         fetch(apiUrl + '/product/commentList',{
@@ -236,7 +275,7 @@
       },
       getProps(){
         let data = new FormData();
-        data.append('productId', 4324);
+        data.append('productId', this.productID);
         fetch(apiUrl + '/v2/product/getProductProp',{
           body:data,
           method:'post'
@@ -253,7 +292,7 @@
                 else if(item.isEnum==1){
                   return({
                     name:item.name,
-                    value:item.propertyValueBean.propertyValue[0]
+                    value:item.propertyValueBean.propertyoptionList[0].value
                   })
                 }
               })
@@ -263,8 +302,8 @@
       },
       getStock(){
          let data = new FormData();
-         data.append('productId', 4324);
-         data.append('specoptionIdCombo', '9866_9863');
+         data.append('productId', this.productID);
+         data.append('specoptionIdCombo', this.specs.spec1.list[this.specs1Index].id + '_' + this.specs.spec2.list[this.specs2Index].id);
          fetch(apiUrl + '/v2/product/getProductStock',{
           body:data,
           method:'post'
@@ -277,18 +316,30 @@
           });
          });
       },
+      eventFn(ev){
+        ev.preventDefault();
+      },
       goBuy(){
         this.$modal.show('specModal');
       },
       cancel(){
         this.$modal.hide('specModal')
+
+      },
+      beforeOpen (event) {
+        this.$refs.productTouch.addEventListener('touchmove', this.eventFn)
+      },
+      beforeClose (event) {
+        this.$refs.productTouch.removeEventListener('touchmove',this.eventFn)
       },
       //记录当前所选规格的索引值
       chooseSpecs1(index){
         this.specs1Index = index;
+        this.getStock();
       },
       chooseSpecs2(index){
         this.specs2Index = index;
+        this.getStock();
       },
       changeBuyNum(num){
         if(num === 0){
@@ -308,238 +359,358 @@
           }
         }
       },
+      loadMore: function() {
+       /* this.busy = true;
+
+        setTimeout(() => {
+          for (var i = 0, j = 10; i < j; i++) {
+            this.data.push({ name: count++ });
+          }
+          this.busy = false;
+        }, 1000);*/
+      },
       sure(){
-        this.$router.push('/login')
+        this.ADD_PRODUCT({
+            productID:this.productID,
+            proUrl:this.pop.popImage,
+            name:this.mainName,
+            specs1:this.specs.spec1.list[this.specs1Index].value,
+            specs2:this.specs.spec2.list[this.specs2Index].value,
+            specComboId:this.specs.spec1.list[this.specs1Index].id + '_' + this.specs.spec2.list[this.specs2Index].id,
+            price:this.pop.popPrice,
+            stock:this.buyNum,
+            deliveryFee:this.deliveryFee
+        });
+        if(!getStore('memberToken')){
+          this.$router.push({path:'/login?shareCode=' + this.shareCode});
+        }
+        else{
+          this.$router.push('/order')
+        }
       }
     }
   }
 </script>
 <style lang="scss">
-  @import '../../../node_modules/_vue-tabs-component@1.1.0@vue-tabs-component/docs/resources/tabs-component.css';
-  .swiper-container img{
+.product {
+  .paramImg{
     width:100%;
-    min-height:1000px;
   }
-  .content{
-    img{
-      width:100%;
+  .change_show_type {
+    display: flex;
+    flex-direction: row;
+    font-size: 32px; /*px*/
+    color: #a6a6a6;
+    border-bottom: 1px solid #f0f0f0;  /*no*/
+    .item {
+      margin: 20px 0;
+      width: 25%;
+      text-align: center;
+      .active {
+        color: #efb4a9;
+        border-bottom: 1px solid #efb4a9; /*no*/
+      }
+
+      span {
+        display: inline-block;
+        height: 100%;
+      }
     }
   }
-  .title{
-    font-size:32px;/*px*/
-    div{
-      height:60px;
-      line-height:60px;
-    }
-    .price{
-      color:#ec9182;
+  .swiper-container img {
+    width: 100%;
+    min-height: 1000px;
+  }
+
+  .content {
+    img {
+      width: 100%;
     }
   }
-  .tips{
-    width:100%;
-    border-width:1px 0px;
-    border-style:solid;
+  .title {
+    padding: 16px 40px;
+    font-size: 32px;  /*px*/
+    div {
+      height: auto;
+      line-height: 60px;
+    }
+
+  .price {
+    color: #ec9182;
+  }
+}
+  .tips {
+    width: 100%;
+    border-width: 1px 0px; /*no*/
+    border-style: solid;
     border-color: #eee;
   }
-  .avatar{
+
+  .avatar {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    img{
-      width:152px;
-      height:152px;
-      border-radius:76px;
-      border:2px solid #fff;
-    }
-    .nickname{
-      font-size: 32px;/*px*/
-      color: #222;
-    }
-    .signature{
-      font-size: 28px;/*px*/
-      color: #888;
-    }
-  }
-  .introduction{
-    margin:0px 20px;
-    img{
-      width:100%;
-    }
-    p{
-      font-size: 28px;/*px*/
-      color: #8f8f94;
-    }
+    margin-top:80px;
+  img {
+    width: 152px;
+    height: 152px;
+    border-radius: 76px;
+    border: 2px solid #fff;
   }
 
-  .commentList{
-    width:100%;
+  .nickname {
+    font-size: 32px; /*px*/
+    color: #222;
   }
-  .comment{
-    display: flex;
-    flex-direction: row;
-    margin:0px 20px;
-    padding:30px 0px;
-    border-bottom:2px solid #f0f0f0;
-    font-size: 28px;/*px*/
-    img{
-      width:80px;
-      height:80px;
-      border-radius: 50%;
+
+  .signature {
+    font-size: 28px; /*px*/
+    color: #888;
+  }
+}
+.introduction {
+  margin: 0px 20px;
+    img {
+      width: 100%;
     }
+    p {
+      font-size: 28px; /*px*/
+      color: #8f8f94;
+    }
+}
+
+.commentList {
+  width: 100%;
+}
+
+.comment {
+  display: flex;
+  flex-direction: row;
+  margin: 0px 20px;
+  padding: 30px 0px;
+  border-bottom: 2px solid #f0f0f0;
+  font-size: 28px;  /*px*/
+  img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
   }
-  .com-item{
+  .com-item {
     display: flex;
     flex-direction: column;
     text-align: left;
-    margin-left:20px;
+    margin-left: 20px;
   }
-  .params{
-    margin:0px 20px;
-    font-size: 28px;/*px*/
+}
+
+
+.params {
+  margin: 0px 20px;
+  font-size: 28px; /*px*/
+}
+
+.par-list {
+  padding: 0 20px;
+
+.p-item {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 2px solid #f1f1f1;
+  height: auto;
+  line-height: 100px;
+  overflow: hidden;
+
+.left {
+  width: 200px;
+}
+
+}
+}
+.bar {
+  height: 100px;
+  a {
+  position: fixed;
+  right: 0;
+  left: 0;
+  bottom: 0;
+
+  line-height: 100px;
+  padding-right: 20px;
+  padding-left: 20px;
+
+  text-align: center;
+  font-size: 32px; /*px*/
+  color: #f1f1f1;
+  background-color: #ec9282;
+  backface-visibility: hidden;
+
+  display: table;
+  width: 100%;
+  padding: 0;
+  border-top: 0;
+  border-bottom: 0;
+  table-layout: fixed;
+  touch-callout: none;
+  overflow: hidden;
+    z-index:10;
+}
+
+}
+.pop {
+
+.cancel {
+  display: flex;
+  justify-content: flex-end;
+
+img {
+  width: 40px;
+  height: 40px;
+  margin: 10px;
+}
+
+}
+.detail {
+  display: flex;
+  flex-direction: row;
+  padding: 60px 30px 0px;
+  background-color: #fff;
+
+img {
+  width: 196px;
+  height: 196px;
+  border: 2px solid #000; /*no*/
+}
+
+.content {
+  margin-left: 30px;
+  display: flex;
+  flex-direction: column;
+
+div {
+  height: 60px;
+  line-height: 60px;
+}
+
+.price {
+  font-size: 32px; /*px*/
+  color: #ec9182;
+}
+
+.name {
+  font-size: 28px; /*px*/
+  color: #222;
+}
+
+.stock {
+  font-size: 24px; /*px*/
+  color: #a6a6a6;
+}
+
+}
+}
+.specs {
+  padding: 45px 30px 0px;
+  background-color: #fff;
+
+.title {
+  font-size: 28px; /*px*/
+}
+
+ul {
+  display: flex;
+  flex-direction: row;
+
+li {
+  width: 110px;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  border: 1px solid #ddd; /*no*/
+  color: #333;
+  border-radius: 4px; /*no*/
+  margin: 30px 20px 0 0;
+}
+
+.active {
+  background: #ec9182;
+  border: 1px solid #ec9182; /*no*/
+  color: #fefefe;
+}
+
+}
+}
+.num {
+
+  p {
+    font-size: 28px; /*px*/
   }
-  .p-item{
+  display: flex ;
+  flex-direction: row  ;
+  justify-content: space-between  ;
+  background-color:#fff  ;
+  padding:60px  30px;
+  .right {
     display: flex;
     flex-direction: row;
-    border-bottom:2px solid #f1f1f1;
-    height:auto;
-    line-height:100px;
-    overflow:hidden;
-    .left{
-      width:200px;
-    }
-  }
-  .bar a{
-    position: fixed;
-    right: 0;
-    left: 0;
-    bottom:0;
-    height: 100px;
-    line-height: 100px;
-    padding-right: 20px;
-    padding-left: 20px;
+    border: 1px solid #ddd; /*no*/
+    border-radius: 4px;  /*no*/
+.number {
+  border-width: 0px 1px; /*px*/
+  border-color: #ddd;
+  border-style: solid;
+}
 
-    text-align:center;
-    font-size:32px;/*px*/
-    color:#f1f1f1;
-    background-color:#ec9282;
-    backface-visibility: hidden;
+.least {
+  color: #ddd;
+}
 
-    display: table;
-    width: 100%;
-    padding: 0;
-    border-top: 0;
-    border-bottom: 0;
-    table-layout: fixed;
-    touch-callout: none;
-    overflow:hidden;
-  }
-  .pop{
-    .cancel{
-      display: flex;
-      justify-content: flex-end;
-      img{
-        width:40px;
-        height:40px;
-        margin:10px;
-      }
-    }
-    .detail{
-      display: flex;
-      flex-direction: row;
-      padding:60px 30px 0px;
-      background-color:#fff;
-      img{
-        width:196px;
-        height:196px;
-        border:2px solid #000;/*no*/
-      }
-      .content{
-        margin-left:30px;
-        display: flex;
-        flex-direction: column;
-        div{
-          height:60px;
-          line-height:60px;
-        }
-        .price{
-          font-size:32px;/*px*/
-          color:#ec9182;
-        }
-        .name{
-          font-size:28px;/*px*/
-          color:#222;
-        }
-        .stock{
-          font-size:24px;/*px*/
-          color:#a6a6a6;
-        }
-      }
-    }
-    .specs{
-      padding:45px 30px 0px;
-      background-color:#fff;
-      .title{
-        font-size:28px;/*px*/
-      }
-      ul{
-        display: flex;
-        flex-direction: row;
-      li{
-        width:110px;
-        height:50px;
-        line-height:50px;
-        text-align:center;
-        border:1px solid #ddd;/*no*/
-        color:#333;
-        border-radius:4px;/*no*/
-        margin:30px 20px 0 0;
-      }
-      .active{
-        background:#ec9182;
-        border:1px solid #ec9182;/*no*/
-        color:#fefefe;
-      }
-    }
-    }
-    .num{
-      p{
-        font-size:28px;/*px*/
-      }
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      background-color:#fff;
-      padding:60px 30px;
-    .right{
-      display: flex;
-      flex-direction: row;
-      border:1px solid #ddd;/*no*/
-      border-radius:4px;/*no*/
-        .number{
-          border-width: 0px 1px;/*px*/
-          border-color:#ddd;
-          border-style: solid;
-        }
-        .least{
-          color:#ddd;
-        }
-    div{
-      width:66px;
-      height:72px;
-      line-height: 72px;
-      text-align:center;
-      }
-      }
-    }
-  .bottom{
-    height:100px;
-    line-height:100px;
-    background-color:#ec9182;
-    color:#fff;
-    text-align:center;
-    font-size:36px;/*px*/
-  }
-  }
+div {
+  width: 66px;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+}
 
+}
+}
+.bottom {
+  height: 100px;
+  line-height: 100px;
+  background-color: #ec9182;
+  color: #fff;
+  text-align: center;
+  font-size: 36px; /*px*/
+}
+
+}
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-active {
+  opacity: 0;
+}
+.fade-choose-enter-active, .fade-choose-leave-active {
+  transition: opacity .5s;
+}
+.fade-choose-leave, .fade-choose-leave-active {
+  display: none;
+}
+.fade-choose-enter, .fade-choose-leave-active {
+  opacity: 0;
+}
+.router-slid-enter-active, .router-slid-leave-active {
+  transition: all .4s;
+}
+.router-slid-enter, .router-slid-leave-active {
+  transform: translate3d(2rem, 0, 0);
+  opacity: 0;
+}
+.swiper-pagination-bullet{
+  background-color:#f2f2f2;
+}
+.swiper-pagination-bullet-active{
+  background-color: #fff;
+}
 </style>

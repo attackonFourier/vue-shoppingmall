@@ -192,6 +192,9 @@
         }
       }
     },
+    eventFn(ev){
+      ev.preventDefault();
+    },
     beforeMount () {
       Modal.event.$on('toggle', (name, state, params) => {
         if (name === this.name) {
@@ -391,10 +394,10 @@
     position: fixed;
     left: 0;
     top: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.2);
-    z-index: 999;
+    z-index: 998;
     opacity: 1;
   }
 
@@ -402,6 +405,7 @@
     position: absolute;
     overflow: hidden;
     box-sizing: border-box;
+    z-index:999;
   }
 
   .v--modal {
