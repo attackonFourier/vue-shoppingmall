@@ -9,7 +9,7 @@ import { routerMode } from './utils/env'
 import swiper from 'vue-awesome-swiper'
 import Tab from 'vue-tabs-component'
 import modal from './components/modal'
-import Scroll from 'vue-infinite-scroll'
+//import Scroll from 'vue-infinite-scroll'
 import 'whatwg-fetch'
 
 import './style/icofont/iconfont.css'
@@ -18,7 +18,7 @@ Vue.use(VueRouter)
 Vue.use(swiper)
 Vue.use(Tab)
 Vue.use(modal)
-Vue.use(Scroll)
+//Vue.use(Scroll)
 
 const router = new VueRouter({
   routes,

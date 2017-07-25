@@ -1,5 +1,5 @@
 /**
- * Created by cloud.wong on 2017/6/23.
+ * Created by cloud.wong.
  */
 import fetch from 'whatwg-fetch'
 

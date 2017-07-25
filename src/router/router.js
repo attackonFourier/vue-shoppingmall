@@ -4,6 +4,9 @@
 import App from '../App.vue'
 
 const index = r  => require.ensure([], () => r(require('../views/index/index.vue')), 'index')
+const paint = r => require.ensure([], () => r(require('../views/paint/paint.vue')), 'paint')
+const designer = r => require.ensure([], () => r(require('../views/designer/designer.vue')), 'designer')
+const info = r => require.ensure([], () => r(require('../views/designer/children/info.vue')), 'info')
 const product = r  => require.ensure([], () => r(require('../views/product/product.vue')), 'product')
 const login = r  => require.ensure([], () => r(require('../views/login/login.vue')), 'login')
 const order = r  => require.ensure([], () => r(require('../views/order/order.vue')), 'order')
@@ -26,6 +29,20 @@ export default [{
     {
       path:'index',
       component:index
+    },
+    //设计师
+    {
+      path:'designer',
+      component:designer,
+      children:[{
+        path:'info',
+        component:info
+      }]
+    },
+    //画报
+    {
+      path:'paint',
+      component:paint
     },
     //商品详细页
     {

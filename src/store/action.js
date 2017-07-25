@@ -1,5 +1,5 @@
 /**
- * Created by cloud.wong on 2017/6/26.
+ * Created by cloud.wong.
  */
 import {
   SAVED_ADDRESS
